@@ -125,7 +125,7 @@ def checkValidInit(mapStat, init_pos):
         return False
 
     walls = (mapStat == -1)
-    flagArr = np.zeros((14, 14), dtype=np.int32)
+    flagArr = np.ones((14, 14), dtype=np.int32)
     for i in range(12):
         flagArr[i + 1][1:13] = walls[i]
 
