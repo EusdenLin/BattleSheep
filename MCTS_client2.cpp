@@ -741,73 +741,178 @@ void backprop(vector<struct node> &tree, int order, int playerID, int leaf_node_
 }
 
 std::vector<int> InitPos(int mapStat[12][12])
-{
+{ 
 	std::vector<int> init_pos;
 	init_pos.resize(2);
 	int all_ava_dir[7] = {0, 0, 0, 0, 0, 0, 0};
 	int zero_cnt=0;
+	int ava[12][12];
+// 1, check if the space is available
 	for(int y=0; y<12; y++){
-		if(y %2 == 1)
-			//cout << "  ";
 		for(int x=0; x<12; x++){
-			int ava_dir=0;
-			if(mapStat[x][y] != 0){
-				//cout<<mapStat[x][y]<<"  ";
-				continue; // next field
+			if( x==0 || x== 11 || y==0 || y==11 ){
+				ava[x][y] == 1;
 			}
 			else{
-				zero_cnt++;
-				if(y%2 == 0){
-					if(y >0 && x>0 && mapStat[x-1][y-1] == 0){
-						ava_dir++;
-					} // dir 1
-					if(y >0 && mapStat[x][y-1] == 0){
-						ava_dir++;
-					} // dir 2
-					if(x >0 && mapStat[x-1][y] == 0){
-						ava_dir++;
-					} // dir 3
-					if(x<11 && mapStat[x+1][y] == 0){
-						ava_dir++;
-					} // dir 4
-					if(x>0 && y<11 && mapStat[x-1][y+1] == 0){
-						ava_dir++;
-					}
-					if(y<11 && mapStat[x][y+1] == 0){
-						ava_dir++;
+				if(y%2==0){
+					if(mapStat[x-1][y-1] == -1 || mapStat[x][y-1] == -1 || mapStat[x-1][y] == -1 ||
+					   mapStat[x+1][y] == -1 || mapStat[x-1][y+1] == -1 || mapStat[x][y+1] == -1){
+						ava[x][y] = 1;
+					} 
+					else{
+						ava[x][y] = 0;
 					}
 				}
 				else{
-					if(y>0 && mapStat[x][y-1] == 0){
-						ava_dir++;
+					if(mapStat[x][y-1] == -1 || mapStat[x+1][y-1] == -1 || mapStat[x-1][y] == -1 ||
+					   mapStat[x+1][y] == -1 || mapStat[x][y+1] == -1 || mapStat[x+1][y+1] == -1){
+						ava[x][y] = 1;   
 					} // dir 1
-					if(x<11 && y>0 && mapStat[x+1][y-1] == 0){
-						ava_dir++;
-					} // dir 2
-					if(x >0 && mapStat[x-1][y] == 0){
-						ava_dir++;
-					} // dir 3
-					if(x<11 && mapStat[x+1][y] == 0){
-						ava_dir++;
-					} // dir 4
-					if(y<11 && mapStat[x][y+1] == 0){
-						ava_dir++;
-					}
-					if(x<11 && y<11 && mapStat[x+1][y+1] == 0){
-						ava_dir++;
+					else{
+						ava[x][y] = 0;
 					}
 				}
 			}
-			if(ava_dir == 5){
-				init_pos[0] = x;
-				init_pos[1] = y;
-				goto leave;
+		}
+	}
+// 2, find a proper position 
+	int x_step, y_step;
+	vector<int> step_size[12][12]; // size = 6, 
+	for(int y=0; y<12; y++){
+		for(int x=0; x<12; x++){
+			if(mapStat[x][y] == 0){
+				x_step=x;
+				y_step=y;
+				for(int dir =1; dir<7; dir++){
+					// x_step, y_step: the space after move toward direction dir 
+					int step_length =0;
+					while(1){ // terminate condition: border, occupied
+						if(dir == 1){
+							if(y_step %2 == 0){
+								if(x_step > 0 && y_step > 0 && (mapStat[x_step-1][y_step-1] == 0)){
+									x_step--;
+									y_step--;
+									step_length++;
+								}
+								else
+									break;
+							}
+							else{
+								if(y_step>0 && (mapStat[x_step][y_step-1] == 0)){
+									y_step--;
+									step_length++;
+								}
+								else
+									break;
+							}
+						}
+						else if(dir == 2){
+							if(y_step %2 == 0){
+								if(y_step >0 && mapStat[x_step][y_step-1] == 0){
+									y_step--;
+									step_length++;
+								}
+								else
+									break;
+							}
+							else{
+								if(x_step<11 && y_step>0 && mapStat[x_step+1][y_step-1] == 0){
+									x_step++;
+									y_step--;
+									step_length++;
+								}
+								else
+									break;
+							}
+						}
+						else if(dir == 3){
+							if(x_step >0 && mapStat[x_step-1][y_step] == 0){
+								x_step--;
+								step_length++;
+							}
+							else
+								break;
+						}
+						else if(dir == 4){
+							if(x_step <11 && mapStat[x_step+1][y_step] == 0){
+								x_step++;
+								step_length++;
+							}
+							else
+								break;
+						}
+						else if(dir == 5){
+							if(y_step %2 == 0){
+								if(x_step >0 && y_step<11 && mapStat[x_step-1][y_step+1] == 0){
+									x_step--;
+									y_step++;
+									step_length++;
+								}
+								else
+									break;
+							}
+							else{
+								if(y_step<11 && mapStat[x_step][y_step+1] == 0){
+									y_step++;
+									step_length++;
+								}
+								else
+									break;
+							}
+						}
+						else if(dir == 6){
+							if(y_step %2 == 0){
+								if(y_step<11 && mapStat[x_step][y_step+1] == 0){
+									y_step++;
+									step_length++;
+								}
+								else
+									break;
+							}
+							else{
+								if(x_step<11 && y_step<11 && mapStat[x_step+1][y_step+1] == 0){
+									x_step++;
+									y_step++;
+									step_length++;
+								}
+								else
+									break;
+							}
+						}
+					}
+					step_size[x][y].push_back(step_length);
+				}
 			}
 		}
-		//cout << endl;
 	}
-	leave:
-		cout << init_pos[0] << " " << init_pos[1] << endl;
+
+// what is important? step length, 
+	int min_step_length=200;
+	for(int y=0; y<12; y++){
+		for(int x=0; x<12; x++){
+			int ava_dir=0;
+			int sum_step_size=0;
+			int side_step_length=0;
+			if(mapStat[x][y] != 0 || ava[x][y] == 0){
+				continue; // next field
+			}
+			else{
+				for(int i=1; i<7; i++){
+					if(step_size[x][y][i] >0){
+						ava_dir++;
+						sum_step_size+=step_size[x][y][i];
+					}
+				}
+				if(ava_dir < 4) continue;
+				if(sum_step_size < min_step_length && sum_step_size >=8){
+					min_step_length = sum_step_size;
+					init_pos[0] = x;
+					init_pos[1] = y;
+				} 
+			}
+		}
+	}
+
 	return init_pos;
 }
 

@@ -743,73 +743,184 @@ void backprop(vector<struct node> &tree, int order, int playerID, int leaf_node_
 }
 
 std::vector<int> InitPos(int mapStat[12][12])
-{
+{ 
 	std::vector<int> init_pos;
 	init_pos.resize(2);
 	int all_ava_dir[7] = {0, 0, 0, 0, 0, 0, 0};
 	int zero_cnt=0;
+	int ava[12][12];
+// 1, check if the space is available
 	for(int y=0; y<12; y++){
-		if(y %2 == 1)
-			//cout << "  ";
 		for(int x=0; x<12; x++){
-			int ava_dir=0;
-			if(mapStat[x][y] != 0){
-				//cout<<mapStat[x][y]<<"  ";
-				continue; // next field
+			if( x==0 || x== 11 || y==0 || y==11 ){
+				ava[x][y] == 1;
 			}
 			else{
-				zero_cnt++;
-				if(y%2 == 0){
-					if(y >0 && x>0 && mapStat[x-1][y-1] == 0){
-						ava_dir++;
-					} // dir 1
-					if(y >0 && mapStat[x][y-1] == 0){
-						ava_dir++;
-					} // dir 2
-					if(x >0 && mapStat[x-1][y] == 0){
-						ava_dir++;
-					} // dir 3
-					if(x<11 && mapStat[x+1][y] == 0){
-						ava_dir++;
-					} // dir 4
-					if(x>0 && y<11 && mapStat[x-1][y+1] == 0){
-						ava_dir++;
-					}
-					if(y<11 && mapStat[x][y+1] == 0){
-						ava_dir++;
+				if(y%2==0){
+					if(mapStat[x-1][y-1] == -1 || mapStat[x][y-1] == -1 || mapStat[x-1][y] == -1 ||
+					   mapStat[x+1][y] == -1 || mapStat[x-1][y+1] == -1 || mapStat[x][y+1] == -1){
+						ava[x][y] = 1;
+					} 
+					else{
+						ava[x][y] = 0;
 					}
 				}
 				else{
-					if(y>0 && mapStat[x][y-1] == 0){
-						ava_dir++;
+					if(mapStat[x][y-1] == -1 || mapStat[x+1][y-1] == -1 || mapStat[x-1][y] == -1 ||
+					   mapStat[x+1][y] == -1 || mapStat[x][y+1] == -1 || mapStat[x+1][y+1] == -1){
+						ava[x][y] = 1;   
 					} // dir 1
-					if(x<11 && y>0 && mapStat[x+1][y-1] == 0){
-						ava_dir++;
-					} // dir 2
-					if(x >0 && mapStat[x-1][y] == 0){
-						ava_dir++;
-					} // dir 3
-					if(x<11 && mapStat[x+1][y] == 0){
-						ava_dir++;
-					} // dir 4
-					if(y<11 && mapStat[x][y+1] == 0){
-						ava_dir++;
-					}
-					if(x<11 && y<11 && mapStat[x+1][y+1] == 0){
-						ava_dir++;
+					else{
+						ava[x][y] = 0;
 					}
 				}
 			}
-			if(ava_dir == 5){
-				init_pos[0] = x;
-				init_pos[1] = y;
-				goto leave;
+		}
+	}
+// 2, find a proper position 
+	int x_step, y_step;
+	vector<int> step_size[12][12]; // size = 6, 
+	for(int y=0; y<12; y++){
+		for(int x=0; x<12; x++){
+			if(mapStat[x][y] == 0){
+				x_step=x;
+				y_step=y;
+				for(int dir =1; dir<7; dir++){
+					// x_step, y_step: the space after move toward direction dir 
+					int step_length =0;
+					while(1){ // terminate condition: border, occupied
+						if(dir == 1){
+							if(y_step %2 == 0){
+								if(x_step > 0 && y_step > 0 && (mapStat[x_step-1][y_step-1] == 0)){
+									x_step--;
+									y_step--;
+									step_length++;
+								}
+								else
+									break;
+							}
+							else{
+								if(y_step>0 && (mapStat[x_step][y_step-1] == 0)){
+									y_step--;
+									step_length++;
+								}
+								else
+									break;
+							}
+						}
+						else if(dir == 2){
+							if(y_step %2 == 0){
+								if(y_step >0 && mapStat[x_step][y_step-1] == 0){
+									y_step--;
+									step_length++;
+								}
+								else
+									break;
+							}
+							else{
+								if(x_step<11 && y_step>0 && mapStat[x_step+1][y_step-1] == 0){
+									x_step++;
+									y_step--;
+									step_length++;
+								}
+								else
+									break;
+							}
+						}
+						else if(dir == 3){
+							if(x_step >0 && mapStat[x_step-1][y_step] == 0){
+								x_step--;
+								step_length++;
+							}
+							else
+								break;
+						}
+						else if(dir == 4){
+							if(x_step <11 && mapStat[x_step+1][y_step] == 0){
+								x_step++;
+								step_length++;
+							}
+							else
+								break;
+						}
+						else if(dir == 5){
+							if(y_step %2 == 0){
+								if(x_step >0 && y_step<11 && mapStat[x_step-1][y_step+1] == 0){
+									x_step--;
+									y_step++;
+									step_length++;
+								}
+								else
+									break;
+							}
+							else{
+								if(y_step<11 && mapStat[x_step][y_step+1] == 0){
+									y_step++;
+									step_length++;
+								}
+								else
+									break;
+							}
+						}
+						else if(dir == 6){
+							if(y_step %2 == 0){
+								if(y_step<11 && mapStat[x_step][y_step+1] == 0){
+									y_step++;
+									step_length++;
+								}
+								else
+									break;
+							}
+							else{
+								if(x_step<11 && y_step<11 && mapStat[x_step+1][y_step+1] == 0){
+									x_step++;
+									y_step++;
+									step_length++;
+								}
+								else
+									break;
+							}
+						}
+					}
+					step_size[x][y].push_back(step_length);
+				}
 			}
 		}
-		//cout << endl;
 	}
-	leave:
-		cout << init_pos[0] << " " << init_pos[1] << endl;
+
+// what is important? step length, 
+	int min_step_length=200;
+	for(int y=0; y<12; y++){
+		if(y % 2==1) cout<<"  ";
+		for(int x=0; x<12; x++){
+			int ava_dir=0;
+			int sum_step_size=0;
+			//int side_step_length=0;
+			if(mapStat[x][y] != 0 || ava[x][y] == 0){
+				cout<<" 0"<<"  ";
+				continue; // next field
+			}
+			else{
+				for(int i=0; i<6; i++){
+					if(step_size[x][y][i] >0){
+						ava_dir++;
+						sum_step_size+=step_size[x][y][i];
+					}
+				}
+				cout<<sum_step_size<<"  ";
+				if(ava_dir < 4){
+					continue;
+				} 
+				if(sum_step_size < min_step_length && sum_step_size >=8){ // avoid narrow corner
+					min_step_length = sum_step_size;
+					init_pos[0] = x;
+					init_pos[1] = y;
+				} 
+			}
+		}
+		cout<<endl;
+	}
+
 	return init_pos;
 }
 
@@ -849,8 +960,9 @@ std::vector<int> GetStep(int playerID,int mapStat[12][12], int sheepStat[12][12]
 	tree.push_back(rootNode);
 
 	// no child, ava step, n, w, q, training MCTS 
-	clock_t start, finish;
+	clock_t start, finish, check;
 	start = clock();
+	int loop;
 	for(int i=0; i<ITERS; i++){
 		int sel_node = selection(tree);
 		//cout <<"sel_node :"<< sel_node << endl;
@@ -859,6 +971,9 @@ std::vector<int> GetStep(int playerID,int mapStat[12][12], int sheepStat[12][12]
 		int order =  simulation(tree, expand_child, playerID);
 		//cout <<"order :"<< order << endl;
 		backprop(tree, order, playerID, expand_child);
+		check = clock();
+		loop = i;
+		if(check - start > 5000) break;
 	}
 	finish = clock();
 	cout<<"time elapsed :"<< finish - start << endl;
@@ -885,10 +1000,22 @@ int main(){
     int sheepStat[12][12];
 
 	// player initial
+
 	GetMap(id_package,playerID,mapStat);
-	
+	for(int y=0; y<12; y++){
+		if(y%2 == 1) cout<<"  ";
+		for(int x=0; x<12; x++){
+			if(mapStat[x][y] == -1) cout<<"-1  ";
+			else cout<<" "<<mapStat[x][y]<<"  ";
+		}
+		cout<<endl;
+	}
 	cout << endl;
+	clock_t start, finish, check;
+	start = clock();
 	std::vector<int> init_pos = InitPos(mapStat);
+	finish = clock();
+	cout<<"time elapsed: "<<finish - start<<endl;
 	SendInitPos(id_package,init_pos);
 
 	while (true)
@@ -902,18 +1029,30 @@ int main(){
 }
 
 /*
--1  -1  -1  -1   1   1   1  -1  -1  -1  -1  -1
-  -1  -1  -1   1   1   1   1  -1  -1  -1  -1  -1  
--1  -1  -1  -1  -1   0  -1  -1  -1   3   3  -1
-   0  -1  -1  -1   0   0   2   2   2   3  -1  -1
- 0   0   0   0   0   0  -1   2   2   3  -1  -1
-   0   0   0   0   0   0  -1   2  -1  -1  -1  -1
- 0   0   0   0   0  -1   4   4   2  -1  -1  -1  
-   0  -1   0   0  -1   0   0   4  -1  -1  -1  -1
--1   0   0   0   0  -1   0  -1   4   4  -1  -1
-   1   1   0   0  -1  -1  -1   4   4  -1  -1  -1  
- 1   1   1  -1  -1  -1  -1   4  -1  -1  -1  -1
-   1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1
-order :1
+-1  -1  -1  -1   0   0  -1  -1  -1  -1  -1  -1
+  -1  -1  -1  -1   0   0  -1  -1  -1  -1  -1  -1
+-1  -1  -1  -1   0   0   0   0  -1  -1   0   0  
+  -1  -1   0   0  -1   0  -1  -1  -1  -1   0   0
+-1  -1   0   0   0   0   0   0  -1  -1   0  -1
+  -1  -1   0  -1   0  -1   0   0   0   0   0  -1  
+-1  -1  -1  -1  -1  -1  -1   0  -1  -1   0   0
+  -1  -1   0  -1  -1   0   0   0   0   0   0  -1  
+-1  -1   0   0   0   0   0   0   0   0  -1  -1  
+  -1  -1   0   0  -1   0  -1   0   0  -1  -1  -1
+-1  -1  -1  -1   0   0   0   0   0   0  -1  -1  
+  -1  -1  -1  -1  -1   0  -1   0   0   0   0  -1
+
+ 0   0   0   0  100663308  50331658   0   0   0   0   0   0  
+   0   0   0   0  15794518  7   0   0   0   0   0   0  
+ 0   0   0   0  9  6  7  1128100463   0   0  6  7
+   0   0  3  10   0  6   0   0   0   0  6   0
+ 0   0  4  3  10  7  6  17   0   0  9   0  
+   0   0  4   0  10   0  6  17  12  10  9   0
+ 0   0   0   0   0   0   0  6   0   0  10  9  
+   0   0  2   0   0  5  13  6  8  16  10   0
+ 0   0  3  2  12  6  5  13   0  8   0   0  
+   0   0  3  2   0  6   0  13  6   0   0   0
+ 0   0   0   0  2  16  6  11   0  6   0   0
+   0   0   0   0   0  16   0   0   0  6  6   0  
 */
 
