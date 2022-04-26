@@ -7,9 +7,10 @@
 #include <cstdlib>
 #include <ctime>
 #include <utility>
-#define ITERS 15000
-int total_n =0;
-const double exploration_constant = 5.0;
+#define ITERS 25000 // max_iterations
+#define TO 5800 // timeout 
+int total_n =0; // Ni in uct
+const double exploration_constant = 10.0; // exploration parameter
 using namespace std;
 
 // sample 1: 0.7, 0.2, 0.1, 0.0
@@ -19,15 +20,15 @@ using namespace std;
 
 struct node{
 	public:	
-		int player;
-		int board[12][12];
-		int sheep[12][12];
-		vector<int> child;
-		int parent;
-		vector<vector<int>> step; // <x,y,m,dir> 
-		int n;
-		double q;
-		double w;
+		int player; // currentPlayer ID
+		int board[12][12]; // mapStat in this state
+		int sheep[12][12]; // sheepStat in this state 
+		vector<int> child; // next state ID after correspond action in step
+		int parent; // parent state ID
+		vector<vector<int>> step; // <x,y,m,dir> , available actions for this state 
+		int n; // ni in uct, number of simulations
+		double q; // wi/ni
+		double w; // wi int uct, total reward from ranking 
 };
 
 /*
@@ -897,7 +898,7 @@ std::vector<int> InitPos(int mapStat[12][12])
 				continue; // next field
 			}
 			else{
-				for(int i=1; i<7; i++){
+				for(int i=0; i<6; i++){
 					if(step_size[x][y][i] >0){
 						ava_dir++;
 						sum_step_size+=step_size[x][y][i];
@@ -952,8 +953,9 @@ std::vector<int> GetStep(int playerID,int mapStat[12][12], int sheepStat[12][12]
 	tree.push_back(rootNode);
 
 	// no child, ava step, n, w, q, training MCTS 
-	clock_t start, finish;
+	clock_t start, finish, check;
 	start = clock();
+	int loop;
 	for(int i=0; i<ITERS; i++){
 		int sel_node = selection(tree);
 		//cout <<"sel_node :"<< sel_node << endl;
@@ -962,6 +964,9 @@ std::vector<int> GetStep(int playerID,int mapStat[12][12], int sheepStat[12][12]
 		int order =  simulation(tree, expand_child, playerID);
 		//cout <<"order :"<< order << endl;
 		backprop(tree, order, playerID, expand_child);
+		check = clock();
+		loop = i;
+		if(check - start > TO) break;
 	}
 	finish = clock();
 	cout<<"time elapsed :"<< finish - start << endl;

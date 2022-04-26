@@ -2,9 +2,9 @@
 using namespace std;
 
 int main(){
-    for (int i = 0; i < 5; i++)
-    {
-        cout << (i % 4) + 1<<endl;
-    }
+    bool canMove[4] = {true, true, true, true};
+
+    cout <<(canMove[0] + canMove[1] + canMove[2] + canMove[3]) <<endl;
+
     return 0;
 }

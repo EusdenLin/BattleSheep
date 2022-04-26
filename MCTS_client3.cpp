@@ -7,7 +7,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <utility>
-#define ITERS 15000
+#define ITERS 25000
+#define TO 5800
 int total_n =0;
 const double exploration_constant = 5.0;
 using namespace std;
@@ -897,7 +898,7 @@ std::vector<int> InitPos(int mapStat[12][12])
 				continue; // next field
 			}
 			else{
-				for(int i=1; i<7; i++){
+				for(int i=0; i<6; i++){
 					if(step_size[x][y][i] >0){
 						ava_dir++;
 						sum_step_size+=step_size[x][y][i];
@@ -952,8 +953,9 @@ std::vector<int> GetStep(int playerID,int mapStat[12][12], int sheepStat[12][12]
 	tree.push_back(rootNode);
 
 	// no child, ava step, n, w, q, training MCTS 
-	clock_t start, finish;
+	clock_t start, finish, check;
 	start = clock();
+	int loop;
 	for(int i=0; i<ITERS; i++){
 		int sel_node = selection(tree);
 		//cout <<"sel_node :"<< sel_node << endl;
@@ -962,6 +964,9 @@ std::vector<int> GetStep(int playerID,int mapStat[12][12], int sheepStat[12][12]
 		int order =  simulation(tree, expand_child, playerID);
 		//cout <<"order :"<< order << endl;
 		backprop(tree, order, playerID, expand_child);
+		check = clock();
+		loop = i;
+		if(check - start > TO) break;
 	}
 	finish = clock();
 	cout<<"time elapsed :"<< finish - start << endl;
